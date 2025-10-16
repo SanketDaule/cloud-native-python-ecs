@@ -1,12 +1,12 @@
 variable "region" {
-  type        = string
-  default     = "ap-south-1"
+  type    = string
+  default = "ap-south-1"
 }
 
 variable "environment" {
-  type = string
+  type    = string
 }
 
 variable "project" {
-  type = string
+  type    = string
 }
