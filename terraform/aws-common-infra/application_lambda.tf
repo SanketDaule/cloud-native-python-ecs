@@ -36,8 +36,8 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 }
 
 resource "aws_lambda_layer_version" "ecs_app_lambda_layer" {
-  filename   = "../lambda_layer.zip"
-  layer_name = "${var.project}-lambda-layer"
+  filename         = "../lambda_layer.zip"
+  layer_name       = "${var.project}-lambda-layer"
   source_code_hash = filebase64sha256("../lambda_layer.zip")
 
   compatible_runtimes = ["python3.12"]
