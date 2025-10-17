@@ -20,7 +20,7 @@ build-lambda-layer:
 	@cd backend && pipenv requirements > requirements.txt && \
 	mkdir -p python && \
 	pip install -r requirements.txt -t python/ && \
-	zip -q -r ../terraform/lambda_layer.zip python && \
+	zip -q -r ../terraform/build/lambda_layer.zip python && \
 	rm -rf python requirements.txt
 
 terraform-init:
