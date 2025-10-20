@@ -1,61 +1,70 @@
+data "aws_region" "current" {}
+
 resource "aws_vpc" "ecs_vpc" {
   cidr_block           = var.vpc_cidr_block
   enable_dns_hostnames = var.enable_dns_hostnames
   enable_dns_support   = var.enable_dns_support
-  tags                 = var.tags
+  tags = merge(var.tags, { Name = "${var.name_prefix}-vpc" })
 }
 
-resource "aws_internet_gateway" "ecs_vpc" {
+resource "aws_internet_gateway" "internet_gw" {
   vpc_id = aws_vpc.ecs_vpc.id
-  tags   = var.tags
+  tags   = merge(var.tags, { Name = "${var.name_prefix}-igw" })
 }
 
-# public_subnet Subnets
-resource "aws_subnet" "public_subnet" {
+#--------public and private subnets---------------
+resource "aws_subnet" "public" {
   for_each = var.public_subnet_map
 
-  vpc_id                  = aws_vpc.ecs_vpc.id
-  cidr_block              = each.value.cidr_block
-  availability_zone       = each.value.az
+  vpc_id            = aws_vpc.ecs_vpc.id
+  cidr_block        = each.value.cidr_block
+  availability_zone = each.value.availability_zone
   map_public_ip_on_launch = true
-  tags                    = each.value.tags
+  tags = merge(var.tags, each.value.tags, {
+      Name = coalesce(lookup(each.value.tags, "Name", null), "${var.name_prefix}-public-${each.key}")
+      Tier = "public"
+    })
 }
 
-resource "aws_route_table" "public_subnet" {
-  vpc_id = aws_vpc.ecs_vpc.id
-  tags   = var.tags
-}
-
-resource "aws_route" "public_internet" {
-  route_table_id         = aws_route_table.public_subnet.id
-  destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_internet_gateway.ecs_vpc.id
-}
-
-resource "aws_route_table_association" "public_subnet" {
-  for_each = aws_subnet.public_subnet
-  subnet_id      = each.value.id
-  route_table_id = aws_route_table.public_subnet.id
-}
-
-# private_subnet Subnets
-resource "aws_subnet" "private_subnet" {
+resource "aws_subnet" "private" {
   for_each = var.private_subnet_map
 
-  vpc_id                  = aws_vpc.ecs_vpc.id
-  cidr_block              = each.value.cidr_block
-  availability_zone       = each.value.az
-  map_public_ip_on_launch = false
-  tags                    = each.value.tags
+  vpc_id            = aws_vpc.ecs_vpc.id
+  cidr_block        = each.value.cidr_block
+  availability_zone = each.value.availability_zone
+  tags = merge(var.tags, each.value.tags, {
+      Name = coalesce(lookup(each.value.tags, "Name", null), "${var.name_prefix}-private-${each.key}")
+      Tier = "private"
+    })
 }
 
-resource "aws_route_table" "private_subnet" {
+# ---------------- Routing ----------------
+# Public RT with default route to Internet via IGW
+resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.ecs_vpc.id
-  tags   = var.tags
+  tags   = merge(var.tags, { Name = "${var.name_prefix}-public-rt" })
 }
 
-resource "aws_route_table_association" "private_subnet" {
-  for_each = aws_subnet.private_subnet
+resource "aws_route" "public_default" {
+  route_table_id         = aws_route_table.public_rt.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.internet_gw.id
+}
+
+resource "aws_route_table_association" "public_rt_association" {
+  for_each       = aws_subnet.public
   subnet_id      = each.value.id
-  route_table_id = aws_route_table.private_subnet.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+# Single private RT
+resource "aws_route_table" "private_rt" {
+  vpc_id = aws_vpc.ecs_vpc.id
+  tags   = merge(var.tags, { Name = "${var.name_prefix}-private-rt" })
+}
+
+resource "aws_route_table_association" "private_rt_association" {
+  for_each       = aws_subnet.private
+  subnet_id      = each.value.id
+  route_table_id = aws_route_table.private_rt.id
 }
