@@ -1,3 +1,1 @@
-![VPC Architecture][def]
-
-[def]: assets/cloud-native-python-ecs-architecture.png
+![Logo](assets/Cloud-Native-Ecs-Python-Architecture.drawio.png)
