@@ -14,7 +14,6 @@ variable "project" {
 
 variable "vpc_cidr_block" {
   type    = string
-  default = "10.0.0.0/16"
 }
 
 variable "enable_dns_support" {
@@ -47,32 +46,26 @@ variable "private_subnet_map" {
 # Endpoint toggles exposed at infra layer (optional)
 variable "create_gateway_endpoints" {
   type    = bool
-  default = true
 }
 
 variable "enable_s3_gateway_endpoint" {
   type    = bool
-  default = true
 }
 
 variable "enable_dynamodb_gateway_endpoint" {
   type    = bool
-  default = true
 }
 
 variable "create_interface_endpoints" {
   type    = bool
-  default = true
 }
 
 variable "enable_ecr_interface_endpoints" {
   type    = bool
-  default = true
 }
 
 variable "enable_logs_interface_endpoint" {
   type    = bool
-  default = true
 }
 
 
