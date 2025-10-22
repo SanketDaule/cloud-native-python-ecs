@@ -130,3 +130,45 @@ resource "aws_vpc_endpoint" "dynamodb" {
   route_table_ids   = [aws_route_table.private.id]
   tags              = merge(var.tags, { Name = "${var.name_prefix}-dynamodb-gw-endpoint" })
 }
+
+
+#Interface Endpoints (ECR API, ECR DKR, Logs)
+locals {
+  private_subnet_ids = [for s in aws_subnet.private : s.id]
+}
+
+# ECR API
+resource "aws_vpc_endpoint" "ecr_api" {
+  count               = var.create_interface_endpoints && var.enable_ecr_interface_endpoints ? 1 : 0
+  vpc_id              = aws_vpc.ecs_vpc.id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.ecr.api"
+  vpc_endpoint_type   = "Interface"
+  private_dns_enabled = true
+  subnet_ids          = local.private_subnet_ids
+  security_group_ids  = [aws_security_group.vpce.id]
+  tags                = merge(var.tags, { Name = "${var.name_prefix}-ecr-api-if-endpoint" })
+}
+
+# ECR DKR (registry)
+resource "aws_vpc_endpoint" "ecr_dkr" {
+  count               = var.create_interface_endpoints && var.enable_ecr_interface_endpoints ? 1 : 0
+  vpc_id              = aws_vpc.ecs_vpc.id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.ecr.dkr"
+  vpc_endpoint_type   = "Interface"
+  private_dns_enabled = true
+  subnet_ids          = local.private_subnet_ids
+  security_group_ids  = [aws_security_group.vpce.id]
+  tags                = merge(var.tags, { Name = "${var.name_prefix}-ecr-dkr-if-endpoint" })
+}
+
+# CloudWatch Logs (for awslogs driver)
+# resource "aws_vpc_endpoint" "logs" {
+#   count               = var.create_interface_endpoints && var.enable_logs_interface_endpoint ? 1 : 0
+#   vpc_id              = aws_vpc.ecs_vpc.id
+#   service_name        = "com.amazonaws.${data.aws_region.current.name}.logs"
+#   vpc_endpoint_type   = "Interface"
+#   private_dns_enabled = true
+#   subnet_ids          = local.private_subnet_ids
+#   security_group_ids  = [aws_security_group.vpce.id]
+#   tags                = merge(var.tags, { Name = "${var.name_prefix}-logs-if-endpoint" })
+# }

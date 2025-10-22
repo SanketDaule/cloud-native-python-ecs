@@ -42,3 +42,52 @@ variable "private_subnet_map" {
     tags       = map(string)
   }))
 }
+
+
+# Endpoint toggles exposed at infra layer (optional)
+variable "create_gateway_endpoints" {
+  type    = bool
+  default = true
+}
+
+variable "enable_s3_gateway_endpoint" {
+  type    = bool
+  default = true
+}
+
+variable "enable_dynamodb_gateway_endpoint" {
+  type    = bool
+  default = true
+}
+
+variable "create_interface_endpoints" {
+  type    = bool
+  default = true
+}
+
+variable "enable_ecr_interface_endpoints" {
+  type    = bool
+  default = true
+}
+
+variable "enable_logs_interface_endpoint" {
+  type    = bool
+  default = true
+}
+
+
+# If you already have the ECS Task SG, pass it to harden the endpoints
+variable "endpoint_allowed_sg_id" {
+  type    = string
+  default = null
+}
+
+variable "endpoint_allowed_cidrs" {
+  type    = list(string)
+  default = []
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}

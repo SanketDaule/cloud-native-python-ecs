@@ -65,11 +65,11 @@ variable "enable_ecr_interface_endpoints" {
   default     = true
 }
 
-variable "enable_logs_interface_endpoint" {
-  description = "Create CloudWatch Logs interface endpoint"
-  type        = bool
-  default     = true
-}
+# variable "enable_logs_interface_endpoint" {
+#   description = "Create CloudWatch Logs interface endpoint"
+#   type        = bool
+#   default     = true
+# }
 
 # Restrict who can talk to the Interface endpoint ENIs (port 443)
 variable "endpoint_allowed_sg_id" {
