@@ -1,15 +1,31 @@
 data "aws_region" "current" {}
 
+
+locals {
+  base_tags = merge(var.tags, { Environment = var.environment })
+  private_subnet_ids = [for s in aws_subnet.private : s.id]
+  endpoint_cidrs = (
+    length(var.endpoint_allowed_cidrs) > 0 ?
+    var.endpoint_allowed_cidrs :
+    [aws_vpc.ecs_vpc.cidr_block]
+  )
+}
+
 resource "aws_vpc" "ecs_vpc" {
   cidr_block           = var.vpc_cidr_block
   enable_dns_hostnames = var.enable_dns_hostnames
   enable_dns_support   = var.enable_dns_support
-  tags = merge(var.tags, { Name = "${var.name_prefix}-vpc" })
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name_prefix}-${var.environment}-vpc"
+    }
+  )
 }
 
 resource "aws_internet_gateway" "internet_gw" {
   vpc_id = aws_vpc.ecs_vpc.id
-  tags   = merge(var.tags, { Name = "${var.name_prefix}-igw" })
+  tags   = merge(local.base_tags, { Name = "${var.name_prefix}-igw" })
 }
 
 #--------public and private subnets---------------
@@ -20,10 +36,10 @@ resource "aws_subnet" "public" {
   cidr_block        = each.value.cidr_block
   availability_zone = each.value.availability_zone
   map_public_ip_on_launch = true
-  tags = merge(var.tags, each.value.tags, {
-      Name = coalesce(lookup(each.value.tags, "Name", null), "${var.name_prefix}-public-${each.key}")
-      Tier = "public"
-    })
+  tags = merge(local.base_tags, each.value.tags, {
+    Name = coalesce(lookup(each.value.tags, "Name", null), "${var.name_prefix}-public-${each.key}")
+    Tier = "public"
+  })
 }
 
 resource "aws_subnet" "private" {
@@ -32,17 +48,17 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.ecs_vpc.id
   cidr_block        = each.value.cidr_block
   availability_zone = each.value.availability_zone
-  tags = merge(var.tags, each.value.tags, {
-      Name = coalesce(lookup(each.value.tags, "Name", null), "${var.name_prefix}-private-${each.key}")
-      Tier = "private"
-    })
+  tags = merge(local.base_tags, each.value.tags, {
+    Name = coalesce(lookup(each.value.tags, "Name", null), "${var.name_prefix}-private-${each.key}")
+    Tier = "private"
+  })
 }
 
 # ---------------- Routing ----------------
 # Public RT with default route to Internet via IGW
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.ecs_vpc.id
-  tags   = merge(var.tags, { Name = "${var.name_prefix}-public-rt" })
+  tags   = merge(local.base_tags, { Name = "${var.name_prefix}-public-rt" })
 }
 
 resource "aws_route" "public_default" {
@@ -60,7 +76,7 @@ resource "aws_route_table_association" "public_rt_association" {
 # Single private RT
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.ecs_vpc.id
-  tags   = merge(var.tags, { Name = "${var.name_prefix}-private-rt" })
+  tags = merge(local.base_tags, { Name = "${var.name_prefix}-vpc-endpoint-sg" })
 }
 
 resource "aws_route_table_association" "private_rt_association" {
@@ -74,7 +90,7 @@ resource "aws_security_group" "vpc_endpoint" {
   name        = "${var.name_prefix}-vpc-endpoint-sg"
   description = "Allow ECS tasks to reach VPC Interface Endpoints (443)"
   vpc_id      = aws_vpc.ecs_vpc.id
-  tags        = merge(var.tags, { Name = "${var.name_prefix}-vpc-endpoint-sg" })
+  tags        = merge(local.base_tags, { Name = "${var.name_prefix}-vpc-endpoint-sg" })
 
   # Egress: allow responses
   egress {
@@ -96,12 +112,6 @@ resource "aws_security_group_rule" "vpce_ingress_from_tasks" {
   source_security_group_id = var.endpoint_allowed_sg_id
 }
 
-#Ingress 443 from cidrs
-#Fallback if task sg is yet to be created
-locals {
-  endpoint_cidrs = length(var.endpoint_allowed_cidrs) > 0 ? var.endpoint_allowed_cidrs : [aws_vpc.ecs_vpc.cidr_block]
-}
-
 resource "aws_security_group_rule" "vpce_ingress_from_cidrs" {
   count             = var.endpoint_allowed_sg_id == null ? 1 : 0
   type              = "ingress"
@@ -119,7 +129,7 @@ resource "aws_vpc_endpoint" "s3" {
   service_name      = "com.amazonaws.${data.aws_region.current.name}.s3"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.private_rt.id]
-  tags              = merge(var.tags, { Name = "${var.name_prefix}-s3-gw-endpoint" })
+  tags              = merge(local.base_tags, { Name = "${var.name_prefix}-s3-gw-endpoint" })
 }
 
 resource "aws_vpc_endpoint" "dynamodb" {
@@ -128,13 +138,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
   service_name      = "com.amazonaws.${data.aws_region.current.name}.dynamodb"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.private_rt.id]
-  tags              = merge(var.tags, { Name = "${var.name_prefix}-dynamodb-gw-endpoint" })
-}
-
-
-#Interface Endpoints (ECR API, ECR DKR, Logs)
-locals {
-  private_subnet_ids = [for s in aws_subnet.private : s.id]
+  tags              = merge(local.base_tags, { Name = "${var.name_prefix}-dynamodb-gw-endpoint" })
 }
 
 # ECR API
@@ -146,7 +150,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
   private_dns_enabled = true
   subnet_ids          = local.private_subnet_ids
   security_group_ids  = [aws_security_group.vpc_endpoint.id]
-  tags                = merge(var.tags, { Name = "${var.name_prefix}-ecr-api-if-endpoint" })
+  tags                = merge(local.base_tags, { Name = "${var.name_prefix}-ecr-api-if-endpoint" })
 }
 
 # ECR DKR (registry)
@@ -158,7 +162,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   private_dns_enabled = true
   subnet_ids          = local.private_subnet_ids
   security_group_ids  = [aws_security_group.vpc_endpoint.id]
-  tags                = merge(var.tags, { Name = "${var.name_prefix}-ecr-dkr-if-endpoint" })
+  tags                = merge(local.base_tags, { Name = "${var.name_prefix}-ecr-dkr-if-endpoint" })
 }
 
 # CloudWatch Logs (for awslogs driver)

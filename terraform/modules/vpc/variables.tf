@@ -5,7 +5,11 @@ variable "name_prefix" {
 }
 
 variable "vpc_cidr_block" {
-  type        = string
+  type    = string
+}
+
+variable "environment" {
+  type    = string
 }
 
 variable "enable_dns_support" {
