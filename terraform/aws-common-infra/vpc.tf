@@ -1,7 +1,7 @@
 module "network" {
   source = "../modules/vpc"
 
-  name_prefix           = var.project
+  name_prefix           = var.name_prefix
   vpc_cidr_block        = var.vpc_cidr_block
   enable_dns_support    = var.enable_dns_support
   enable_dns_hostnames  = var.enable_dns_hostnames

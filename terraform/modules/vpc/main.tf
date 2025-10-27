@@ -73,7 +73,7 @@ resource "aws_route_table_association" "private_rt_association" {
 resource "aws_security_group" "vpc_endpoint" {
   name        = "${var.name_prefix}-vpc-endpoint-sg"
   description = "Allow ECS tasks to reach VPC Interface Endpoints (443)"
-  vpc_id      = aws_vpc.this.id
+  vpc_id      = aws_vpc.ecs_vpc.id
   tags        = merge(var.tags, { Name = "${var.name_prefix}-vpc-endpoint-sg" })
 
   # Egress: allow responses
@@ -99,7 +99,7 @@ resource "aws_security_group_rule" "vpce_ingress_from_tasks" {
 #Ingress 443 from cidrs
 #Fallback if task sg is yet to be created
 locals {
-  endpoint_cidrs = length(var.endpoint_allowed_cidrs) > 0 ? var.endpoint_allowed_cidrs : [aws_vpc.this.cidr_block]
+  endpoint_cidrs = length(var.endpoint_allowed_cidrs) > 0 ? var.endpoint_allowed_cidrs : [aws_vpc.ecs_vpc.cidr_block]
 }
 
 resource "aws_security_group_rule" "vpce_ingress_from_cidrs" {
@@ -118,7 +118,7 @@ resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.ecs_vpc.id
   service_name      = "com.amazonaws.${data.aws_region.current.name}.s3"
   vpc_endpoint_type = "Gateway"
-  route_table_ids   = [aws_route_table.private.id]
+  route_table_ids   = [aws_route_table.private_rt.id]
   tags              = merge(var.tags, { Name = "${var.name_prefix}-s3-gw-endpoint" })
 }
 
@@ -127,7 +127,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
   vpc_id            = aws_vpc.ecs_vpc.id
   service_name      = "com.amazonaws.${data.aws_region.current.name}.dynamodb"
   vpc_endpoint_type = "Gateway"
-  route_table_ids   = [aws_route_table.private.id]
+  route_table_ids   = [aws_route_table.private_rt.id]
   tags              = merge(var.tags, { Name = "${var.name_prefix}-dynamodb-gw-endpoint" })
 }
 
@@ -145,7 +145,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
   vpc_endpoint_type   = "Interface"
   private_dns_enabled = true
   subnet_ids          = local.private_subnet_ids
-  security_group_ids  = [aws_security_group.vpce.id]
+  security_group_ids  = [aws_security_group.vpc_endpoint.id]
   tags                = merge(var.tags, { Name = "${var.name_prefix}-ecr-api-if-endpoint" })
 }
 
@@ -157,7 +157,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   vpc_endpoint_type   = "Interface"
   private_dns_enabled = true
   subnet_ids          = local.private_subnet_ids
-  security_group_ids  = [aws_security_group.vpce.id]
+  security_group_ids  = [aws_security_group.vpc_endpoint.id]
   tags                = merge(var.tags, { Name = "${var.name_prefix}-ecr-dkr-if-endpoint" })
 }
 
@@ -169,6 +169,6 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
 #   vpc_endpoint_type   = "Interface"
 #   private_dns_enabled = true
 #   subnet_ids          = local.private_subnet_ids
-#   security_group_ids  = [aws_security_group.vpce.id]
+#   security_group_ids  = [aws_security_group.vpc_endpoint.id]
 #   tags                = merge(var.tags, { Name = "${var.name_prefix}-logs-if-endpoint" })
 # }
