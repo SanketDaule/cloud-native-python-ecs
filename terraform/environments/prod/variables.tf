@@ -9,6 +9,7 @@ variable "region" {
 
 variable "environment" {
   type = string
+  default = "prod"
 }
 
 variable "name_prefix" {

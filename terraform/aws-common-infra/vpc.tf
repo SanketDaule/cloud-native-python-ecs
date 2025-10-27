@@ -2,6 +2,7 @@ module "network" {
   source = "../modules/vpc"
 
   name_prefix           = var.name_prefix
+  environment           = var.environment
   vpc_cidr_block        = var.vpc_cidr_block
   enable_dns_support    = var.enable_dns_support
   enable_dns_hostnames  = var.enable_dns_hostnames
@@ -21,13 +22,13 @@ module "network" {
   endpoint_allowed_cidrs = var.endpoint_allowed_cidrs
 
   tags = merge(
-    {
-      Environment = "dev"
-      Project     = "ecs-app"
-      ManagedBy   = "Terraform"
-    },
-    var.tags
-  )
+  {
+    Environment = var.environment
+    Project     = "ecs-app"
+    ManagedBy   = "Terraform"
+  },
+  var.tags
+)
 }
 
 
