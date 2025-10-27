@@ -7,9 +7,10 @@ variable "environment" {
   type = string
 }
 
-variable "project" {
-  type    = string
-  default = "cloud-native-python-ecs"
+variable "name_prefix" {
+  description = "Name prefix for VPC resources"
+  type        = string
+  default     = "cloud-native-ecs-app"
 }
 
 variable "vpc_cidr_block" {
@@ -41,7 +42,6 @@ variable "private_subnet_map" {
     tags       = map(string)
   }))
 }
-
 
 # Endpoint toggles exposed at infra layer (optional)
 variable "create_gateway_endpoints" {

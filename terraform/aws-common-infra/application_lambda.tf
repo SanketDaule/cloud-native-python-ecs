@@ -5,7 +5,7 @@ data "archive_file" "ecs_app_lambda_zip" {
 }
 
 resource "aws_lambda_function" "ecs_app_lambda" {
-  function_name    = "${var.project}-lambda-function"
+  function_name    = "${var.project}-${var.environment}-lambda-function"
   role             = aws_iam_role.ecs_app_lambda_iam_role.arn
   handler          = "aws_int_lambda_code.lambda_handler"
   runtime          = "python3.12"
@@ -18,7 +18,7 @@ resource "aws_lambda_function" "ecs_app_lambda" {
 }
 
 resource "aws_iam_role" "ecs_app_lambda_iam_role" {
-  name               = "${var.project}-lambda-iam-role"
+  name               = "${var.project}-${var.environment}-lambda-iam-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 

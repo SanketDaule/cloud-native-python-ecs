@@ -1,7 +1,7 @@
 variable "name_prefix" {
   description = "Name prefix for VPC resources"
   type        = string
-  default     = "cloud-native-ecs-python"
+  default     = "cloud-native-ecs-app"
 }
 
 variable "vpc_cidr_block" {

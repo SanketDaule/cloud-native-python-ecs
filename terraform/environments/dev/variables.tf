@@ -1,19 +1,16 @@
-variable "environment" {
-  type = string
-}
-
 variable "region" {
   type    = string
   default = "ap-south-1"
 }
 
 variable "environment" {
-  type = string
+  type    = string
 }
 
-variable "project" {
-  type    = string
-  default = "cloud-native-python-ecs"
+variable "name_prefix" {
+  description = "Name prefix for VPC resources"
+  type        = string
+  default     = "cloud-native-ecs-app"
 }
 
 variable "vpc_cidr_block" {
