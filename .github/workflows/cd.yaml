@@ -5,32 +5,40 @@ on:
     branches:
       - main
       - develop
-      - feature/**
   pull_request: 
     branches: 
       - main
-      - 'feature/**'
-
+      - develop
   workflow_dispatch:
 
 permissions:
-    id-token: write
-    contents: read
+  id-token: write
+  contents: read
 
 jobs:
-  deploy-dev:
-    name: deploy to aws account
+  deploy:
     runs-on: ubuntu-latest
 
-    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+    # Run for specific branches only
+    if: |
+      github.event_name == 'push' &&
+      (github.ref_name == 'main' || github.ref_name == 'develop')
 
     steps:
-      - name: checkout 
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: deploy to aws account
+      - name: Determine environment
+        id: env_selector
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            echo "env=prod" >> $GITHUB_OUTPUT
+          elif [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
+            echo "env=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to AWS
         uses: ./.github/actions/deploy
         with:
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
-          environment: dev
-          
+          environment: ${{ steps.env_selector.outputs.env }}
