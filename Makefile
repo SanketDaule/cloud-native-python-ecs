@@ -17,11 +17,14 @@ install-dev-deps:
 	@cd backend && python -m pip install --no-input pipenv && python -m pipenv install --dev
 
 build-lambda-layer:
-	@cd backend && pipenv requirements > requirements.txt && \
-	mkdir -p python && \
-	pip install -r requirements.txt -t python/ && \
-	zip -q -r ../terraform/build/lambda_layer.zip python && \
-	rm -rf python requirements.txt
+	@echo "Building Lambda layer..."
+	mkdir -p terraform/build
+	rm -f terraform/build/lambda_layer.zip
+	mkdir -p python
+	pip install -r requirements.txt -t python/
+	cd python && zip -q -r ../terraform/build/lambda_layer.zip .
+	rm -rf python
+	@echo "Lambda layer built at terraform/build/lambda_layer.zip"
 
 terraform-init:
 	@echo "[INFO] Initialiasing terraform with config $(BACKEND_CONF), environment file $(ENV_VAR_FILE)"
