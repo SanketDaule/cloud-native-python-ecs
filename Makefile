@@ -8,13 +8,9 @@ all: plan
 
 # Install pipenv and the required dependencies for the backend (prod/dev)
 install-deps:
-	@echo "[INFO] Installing pipenv and dependencies in the backend"
-	@cd backend && python -m pip install --no-input pipenv && python -m pipenv install
-
-# Install the development dependencies for the backend
-install-dev-deps:
-	@echo "[INFO] Installing pipenv and development dependencies in the backend"
-	@cd backend && python -m pip install --no-input pipenv && python -m pipenv install --dev
+	@echo "[INFO] Installing dependencies from requirements.txt"
+	pip install --upgrade pip
+	pip install -r requirements.txt
 
 build-lambda-layer:
 	@echo "Building Lambda layer..."
