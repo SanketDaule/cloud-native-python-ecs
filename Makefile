@@ -8,20 +8,19 @@ all: plan
 
 # Install pipenv and the required dependencies for the backend (prod/dev)
 install-deps:
-	@echo "[INFO] Installing pipenv and dependencies in the backend"
-	@cd backend && python -m pip install --no-input pipenv && python -m pipenv install
-
-# Install the development dependencies for the backend
-install-dev-deps:
-	@echo "[INFO] Installing pipenv and development dependencies in the backend"
-	@cd backend && python -m pip install --no-input pipenv && python -m pipenv install --dev
+	@echo "[INFO] Installing dependencies from requirements.txt"
+	pip install --upgrade pip
+	pip install -r requirements.txt
 
 build-lambda-layer:
-	@cd backend && pipenv requirements > requirements.txt && \
-	mkdir -p python && \
-	pip install -r requirements.txt -t python/ && \
-	zip -q -r ../terraform/build/lambda_layer.zip python && \
-	rm -rf python requirements.txt
+	@echo "Building Lambda layer..."
+	mkdir -p terraform/build
+	rm -f terraform/build/lambda_layer.zip
+	mkdir -p python
+	pip install -r requirements.txt -t python/
+	cd python && zip -q -r ../terraform/build/lambda_layer.zip .
+	rm -rf python
+	@echo "Lambda layer built at terraform/build/lambda_layer.zip"
 
 terraform-init:
 	@echo "[INFO] Initialiasing terraform with config $(BACKEND_CONF), environment file $(ENV_VAR_FILE)"
