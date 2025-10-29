@@ -34,7 +34,7 @@ resource "aws_subnet" "public" {
 
   vpc_id            = aws_vpc.ecs_vpc.id
   cidr_block        = each.value.cidr_block
-  availability_zone = each.value.availability_zone
+  availability_zone = each.value.az
   map_public_ip_on_launch = true
   tags = merge(local.base_tags, each.value.tags, {
     Name = coalesce(lookup(each.value.tags, "Name", null), "${var.name_prefix}-public-${each.key}")
@@ -47,7 +47,7 @@ resource "aws_subnet" "private" {
 
   vpc_id            = aws_vpc.ecs_vpc.id
   cidr_block        = each.value.cidr_block
-  availability_zone = each.value.availability_zone
+  availability_zone = each.value.az
   tags = merge(local.base_tags, each.value.tags, {
     Name = coalesce(lookup(each.value.tags, "Name", null), "${var.name_prefix}-private-${each.key}")
     Tier = "private"
