@@ -22,6 +22,13 @@ resource "aws_lambda_function" "ecs_app_lambda" {
     }
   }
 
+  tags = merge(
+    {
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+    },
+    var.tags
+  )
 }
 
 resource "aws_iam_role" "ecs_app_lambda_iam_role" {
