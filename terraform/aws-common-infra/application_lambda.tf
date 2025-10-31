@@ -22,6 +22,11 @@ resource "aws_lambda_function" "ecs_app_lambda" {
     }
   }
 
+  vpc_config {
+    subnet_ids         = module.network.private_subnet_ids
+    security_group_ids = [aws_security_group.lambda_sg.id]
+  }
+
   tags = merge(
     {
       Environment = var.environment
