@@ -37,12 +37,12 @@ private_subnet_map = {
   }
 }
 
-create_gateway_endpoints          = true
-enable_s3_gateway_endpoint        = true
-enable_dynamodb_gateway_endpoint  = true
-create_interface_endpoints        = true
-enable_ecr_interface_endpoints    = true
-enable_logs_interface_endpoint     = true
+create_gateway_endpoints         = true
+enable_s3_gateway_endpoint       = true
+enable_dynamodb_gateway_endpoint = true
+create_interface_endpoints       = true
+enable_ecr_interface_endpoints   = true
+enable_logs_interface_endpoint   = true
 
 # Until ECS Task SG exists, allow within VPC
 endpoint_allowed_sg_id = null
