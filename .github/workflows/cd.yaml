@@ -16,6 +16,39 @@ permissions:
   contents: read
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/github-actions-code-build
+          aws-region: ap-south-1
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t cloud-native-ecs-python-app .
+          docker tag rock-paper-scissors-app:latest ${{ steps.login-ecr.outputs.registry }}/cloud-native-ecs-python-app:latest
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/cloud-native-ecs-python-app:latest
+
+      - name: Output image URL
+        run: |
+          echo "Image URL: ${{ steps.login-ecr.outputs.registry }}/cloud-native-ecs-python-app:latest"
+
   deploy:
     runs-on: ubuntu-latest
 
