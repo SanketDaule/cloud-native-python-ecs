@@ -15,6 +15,13 @@ resource "aws_lambda_function" "ecs_app_lambda" {
   filename         = data.archive_file.ecs_app_lambda_zip.output_path
   source_code_hash = data.archive_file.ecs_app_lambda_zip.output_base64sha512
 
+  environment {
+    variables = {
+      AWS_REGION     = var.region
+      DYNAMODB_TABLE = aws_dynamodb_table.ecs_data_store.name
+    }
+  }
+
 }
 
 resource "aws_iam_role" "ecs_app_lambda_iam_role" {
