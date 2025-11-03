@@ -36,24 +36,6 @@ resource "aws_lambda_function" "ecs_app_lambda" {
   )
 }
 
-resource "aws_iam_role" "ecs_app_lambda_iam_role" {
-  name               = "${var.name_prefix}-${var.environment}-lambda-iam-role"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
-}
-
-data "aws_iam_policy_document" "lambda_assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
 resource "aws_lambda_layer_version" "ecs_app_lambda_layer" {
   filename         = "../build/lambda_layer.zip"
   layer_name       = "${var.name_prefix}-lambda-layer"

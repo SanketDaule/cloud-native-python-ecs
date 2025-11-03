@@ -54,30 +54,3 @@ resource "aws_ecs_service" "ecs_app_service" {
 
   depends_on = [aws_lb_listener.http_listener, aws_lb_target_group.ecs_app_alb_tg]
 }
-
-resource "aws_security_group" "ecs_service_sg" {
-  name   = "${var.name_prefix}-${var.environment}-cluster-sg"
-  vpc_id = module.network.vpc_id
-
-  # inbound traffic from the ALB only
-  ingress {
-    from_port       = 8080
-    to_port         = 8080
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs_app_alb_sg.id] # only allow traffic from ALB security group
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  tags = merge(
-    {
-      Environment = var.environment
-      ManagedBy   = "Terraform"
-    },
-    var.tags
-  )
-}
