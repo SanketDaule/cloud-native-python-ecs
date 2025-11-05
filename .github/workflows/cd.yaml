@@ -80,6 +80,14 @@ jobs:
           role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/github-actions-code-build
           aws-region: ${{ env.AWS_REGION }}
 
+      
+      - name: Compute ECR repository name
+        id: compute_ecr
+        run: |
+          REPO="${{ env.NAMESPACE }}-${{ steps.compute_env.outputs.env }}-ecr"
+          echo "ecr_repository=$REPO" >> "$GITHUB_OUTPUT"
+
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
