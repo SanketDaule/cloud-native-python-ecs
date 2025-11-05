@@ -79,8 +79,23 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/github-actions-code-build
           aws-region: ${{ env.AWS_REGION }}
-
       
+      - name: Compute environment
+        id: compute_env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENV="${{ inputs.environment }}"
+          else
+            if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+              ENV="prod"
+            elif [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
+              ENV="dev"
+            else
+              ENV="dev"
+            fi
+          fi
+          echo "env=$ENV" >> "$GITHUB_OUTPUT"
+
       - name: Compute ECR repository name
         id: compute_ecr
         run: |
@@ -94,16 +109,25 @@ jobs:
         with:
           registries: ${{ secrets.AWS_ACCOUNT_ID }}
 
+      
+      - name: Compute IMAGE_TAG
+        id: compute_tag
+        run: |
+          TAG="${{ github.event.inputs.image_tag || github.sha::7 }}"
+          echo "IMAGE_TAG=$TAG" >> "$GITHUB_ENV"
+
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-publish
         shell: bash
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ env.ECR_REPO_NAME }}
+          ECR_REPOSITORY: ${{ steps.compute_ecr.outputs.ecr_repository }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
         run: |
-          docker build "${{ inputs.docker_build_dir }}" -f "${{ inputs.path_to_dockerfile }}" -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker build "${{ inputs.docker_build_dir || '.' }}" \
+            -f "${{ inputs.path_to_dockerfile || 'Dockerfile' }}" \
+            -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-          echo "IMAGE $IMAGE_TAG is pushed to $ECR_REGISTRY/$ECR_REPOSITORY"
-          echo "image_tag=$IMAGE_TAG" 
-          echo "full_image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          echo "full_image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
