@@ -1,7 +1,7 @@
 name: Continuous Build and Deployment to AWS 
 
-# on:
-#   push:
+on:
+#  push:
 #     branches:
 #       - main
 #       - develop
