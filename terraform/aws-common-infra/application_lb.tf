@@ -21,7 +21,7 @@ resource "aws_lb_target_group" "ecs_app_alb_tg" {
   name        = "${var.name_prefix}-${var.environment}-tg"
   port        = 8080
   protocol    = "HTTP"
-  vpc_id      = module.network.id
+  vpc_id      = module.network.vpc_id
   target_type = "ip"
 
   health_check {
