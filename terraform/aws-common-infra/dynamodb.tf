@@ -1,6 +1,6 @@
 resource "aws_dynamodb_table" "ecs_data_store" {
   name         = "${var.name_prefix}-${var.environment}-data-store"
-  billing_mode = "PROVISIONED"
+  billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
 
   attribute {
