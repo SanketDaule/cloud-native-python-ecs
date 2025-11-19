@@ -107,27 +107,13 @@ jobs:
         with:
           registries: ${{ secrets.AWS_ACCOUNT_ID }}
     
-      - name: Compute IMAGE_TAG
-        id: compute_tag
-        shell: bash
-        run: |
-          if [[ -n "${{ github.event.inputs.image_tag }}" ]]; then
-            TAG="${{ github.event.inputs.image_tag }}"
-          else
-            TAG="${GITHUB_SHA::7}"
-          fi
-          echo "IMAGE_TAG=$TAG" >> "$GITHUB_ENV"
-          echo "Using IMAGE_TAG=$TAG"
-
-
-
       - name: Build, tag, and push image to Amazon ECR
         id: build-publish
         shell: bash
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ steps.compute_ecr.outputs.ecr_repository }}
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          IMAGE_TAG: latest
         run: |
           docker build "${{ inputs.docker_build_dir || '.' }}" \
             -f "${{ inputs.path_to_dockerfile || 'Dockerfile' }}" \
