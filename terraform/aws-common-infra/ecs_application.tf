@@ -5,6 +5,7 @@ resource "aws_ecs_cluster" "ecs_app_cluster" {
     {
       Environment = var.environment
       ManagedBy   = "Terraform"
+      project     = "ecs-app"
     },
     var.tags
   )
