@@ -17,7 +17,6 @@ resource "aws_lambda_function" "ecs_app_lambda" {
 
   environment {
     variables = {
-      AWS_REGION     = var.region
       DYNAMODB_TABLE = aws_dynamodb_table.ecs_data_store.name
     }
   }
